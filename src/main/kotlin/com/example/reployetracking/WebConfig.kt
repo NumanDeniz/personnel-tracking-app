@@ -8,7 +8,7 @@ class WebConfig : WebMvcConfigurer {
     override fun addCorsMappings(registry: CorsRegistry) {
         registry.addMapping("/**")
                 .allowedOrigins("http://localhost:3000") // İzin verilen origin (istemci)
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // İzin verilen HTTP metodları
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS","HEAD", "PATCH") // İzin verilen HTTP metodları
                 .allowedHeaders("*") // Tüm başlıklara izin ver
                 .allowCredentials(true) // Credentials izin ver (cookies, auth header vs.)
 

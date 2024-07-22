@@ -3,6 +3,7 @@ package com.example.reployetracking
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import java.time.LocalDateTime
 
 @RestController
 @RequestMapping("/api")
@@ -10,7 +11,8 @@ import org.springframework.web.bind.annotation.*
 
 class EmployeController(
         private val employeeService: EmployeService,
-        private val emailService: EmailService
+        private val emailService: EmailService,
+        private val qrCodeService: QRCodeService
 ) {
 
     @GetMapping("/employees")
@@ -65,20 +67,41 @@ class EmployeController(
 //        }
 //    }
 
-    @PostMapping("/login/{userId}")
-    fun logLogin(@PathVariable userId: Long) {
-        employeeService.logLogin(userId)
+    @PostMapping("/login")
+    fun login(@RequestBody loginDTO: LoginDTO): ResponseEntity<Any> {
+        val employee = employeeService.findByEmail(loginDTO.email)
+        return if (employee != null) {
+            if (loginDTO.password == employee.sifre) {
+                // Send QR code
+                val qrCode = employeeService.generateQrCodeAndSendEmail(employee.email)
+                ResponseEntity.ok(mapOf("message" to "QR code sent", "qrCode" to qrCode))
+            } else {
+                ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials")
+            }
+        } else {
+            ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials")
+        }
     }
 
-    @PostMapping("/logout/{userId}")
-    fun logLogout(@PathVariable userId: Long) {
-        employeeService.logLogout(userId)
+    @PostMapping("/verify-qr")
+    fun verifyQrCode(@RequestBody qrCodeDTO: QrCodeDTO): ResponseEntity<Any> {
+        return if (employeeService.verifyQrCode(qrCodeDTO.email, qrCodeDTO.qrCode)) {
+            ResponseEntity.ok("Login successful")
+        } else {
+            ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid QR code")
+        }
     }
 
-    @GetMapping("/logs")
-    fun getLogs(): List<Employee> {
-        return employeeService.getLogs()
+    @GetMapping("/current-user")
+    fun getCurrentUser(@RequestHeader("email") email: String): ResponseEntity<EmployeDTO?> {
+        val employee = employeeService.findByEmail(email)
+        return if (employee != null) {
+            ResponseEntity.ok(employee.toDTO())
+        } else {
+            ResponseEntity.status(HttpStatus.NOT_FOUND).body(null)
+        }
     }
+
 
     @GetMapping("/employees/verify-link/{uuid}")
     fun verifyLink(@PathVariable uuid: String): ResponseEntity<Boolean> {
@@ -143,3 +166,10 @@ class EmployeController(
         }
     }
 }
+data class LoginDTO(
+        val email: String,
+        val password: String
+)
+data class QrCodeDTO(
+        val email: String,
+        val qrCode: String)

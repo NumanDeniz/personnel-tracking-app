@@ -1,5 +1,6 @@
 package com.example.reployetracking
 
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.util.*
@@ -7,6 +8,8 @@ import java.util.*
 @Service
 class EmployeService(private val employeeRepository: EmployeRepository) {
 
+    @Autowired
+    private lateinit var qrCodeService: QRCodeService
     fun getAllEmployees(): List<EmployeDTO> {
         return employeeRepository.findAll().map { it.toDTO() }
     }
@@ -16,12 +19,13 @@ class EmployeService(private val employeeRepository: EmployeRepository) {
         return employee.orElse(null)?.toDTO()
     }
 
+
     fun saveEmployee(employeeDTO: EmployeDTO): EmployeDTO {
         val employee = Employee(
                 email = employeeDTO.email,
                 ad = employeeDTO.ad,
                 soyad = employeeDTO.soyad,
-                sifre = "", // Password left blank, can be added as needed.
+                sifre = employeeDTO.sifre,
                 flag = employeeDTO.flag,
                 uuid = employeeDTO.uuid
         )
@@ -56,12 +60,16 @@ class EmployeService(private val employeeRepository: EmployeRepository) {
     fun findByEmail(email: String): Employee? {
         return employeeRepository.findByEmail(email)
     }
+    fun updateLoginTime(id: Long): Employee {
+        val employee = employeeRepository.findById(id).orElseThrow { RuntimeException("Employee not found") }
+        employee.giris = LocalDateTime.now()
+        return employeeRepository.save(employee)
+    }
 
     fun verifyLink(uuid: String): Boolean {
         val employee = employeeRepository.findByUuid(uuid)
                 ?: throw RuntimeException("Invalid link")
 
-        // Check if the link has already been used
         return employee.dogrulama
     }
 
@@ -84,22 +92,21 @@ class EmployeService(private val employeeRepository: EmployeRepository) {
             throw e
         }
     }
-    fun logLogin(userId: Long) {
-        val user = employeeRepository.findById(userId).orElseThrow { Exception("User not found") }
-        user.giris = LocalDateTime.now()
-        employeeRepository.save(user)
-    }
 
-    fun logLogout(userId: Long) {
-        val user = employeeRepository.findById(userId).orElseThrow { Exception("User not found") }
-        user.cikis = LocalDateTime.now()
-        employeeRepository.save(user)
+
+    fun generateQrCodeAndSendEmail(email: String): String {
+        val qrCodeText = UUID.randomUUID().toString()
+        val qrCodeImage = qrCodeService.generateQRCodeImage(qrCodeText, 250, 250)
+        qrCodeService.sendQRCodeEmail(email, qrCodeImage, qrCodeText)  // qrCodeText eklendi
+        return qrCodeText
     }
 
 
-    fun getLogs(): List<Employee> {
-        return employeeRepository.findAll()
+    fun verifyQrCode(email: String, qrCode: String): Boolean {
+        val employee = employeeRepository.findByEmail(email) ?: return false
+        return employee.uuid == qrCode
     }
+
 
 
     private fun Employee.toDTO(): EmployeDTO {

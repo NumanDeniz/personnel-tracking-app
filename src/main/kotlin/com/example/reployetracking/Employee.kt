@@ -38,6 +38,8 @@ data class Employee(
 
         @Column(name = "cikis_saati")
         var cikis: LocalDateTime? = null
+
+
 ) {
         fun toDTO(): EmployeDTO {
                 return EmployeDTO(id,email, ad, soyad, sifre, flag, uuid, dogrulama, giris, cikis)
