@@ -81,14 +81,13 @@ class EmployeService(private val employeeRepository: EmployeRepository) {
             if (employee.dogrulama) {
                 return null
             }
-
             employee.sifre = sifre
             employee.flag = true
             employee.dogrulama = true // Mark link as used
             val updatedEmployee = employeeRepository.save(employee)
             return updatedEmployee.toDTO()
         } catch (e: Exception) {
-            println("Error setting password for UUID $uuid: ${e.message}")
+            println(" $uuid: ${e.message}")
             throw e
         }
     }

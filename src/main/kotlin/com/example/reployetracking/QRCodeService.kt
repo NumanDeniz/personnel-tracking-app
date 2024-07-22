@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap
 @Service
 class QRCodeService(@Autowired private val mailSender: JavaMailSender) {
 
-    // QR kodları geçici olarak saklamak için bir ConcurrentHashMap kullanılıyor
+    // QR kodları geçici olarak saklamak için bir ConcurrentHashMap kullanılıyoruz
     private val qrCodeMap = ConcurrentHashMap<String, LocalDateTime>()
 
     fun generateQRCodeImage(text: String, width: Int, height: Int): ByteArray {
