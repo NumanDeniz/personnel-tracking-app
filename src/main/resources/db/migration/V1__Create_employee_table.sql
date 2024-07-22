@@ -18,12 +18,12 @@ TABLESPACE pg_default;
 ALTER TABLE IF EXISTS public.employee
     OWNER to postgres;
 
-REVOKE ALL ON TABLE public.employee FROM your_user;
+REVOKE ALL ON TABLE public.employee FROM employee;
 
 GRANT ALL ON TABLE public.employee TO employee;
 GRANT ALL ON TABLE public.employee TO postgres;
 
-GRANT UPDATE, SELECT, DELETE, INSERT ON TABLE public.employee TO your_user;
+GRANT UPDATE, SELECT, DELETE, INSERT ON TABLE public.employee TO employee;
 
 -- Sample insert statement (adjust as necessary)
 INSERT INTO public.employee(
